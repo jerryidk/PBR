@@ -1,7 +1,27 @@
 
 # PBR 
 
-Final project for class cs 6610 (interactive computer graphics) following [pbr guide](https://learnopengl.com/PBR/Theory). I have implemented the microfacet model with direct analytical lighting. In replacement of simple blinn-phong shading model, this project has used much more physical accurate model taking into consideration of energy conservation, material roughness, and microscopic level of surfaces details.
+Final project for class cs 6610 (interactive computer graphics) following [pbr guide](https://learnopengl.com/PBR/Theory). 
+
+
+## Implementation
+
+I have implemented the microfacet model with direct analytical lighting. In replacement of simple blinn-phong shading model, this project has used much more physical accurate model taking into consideration of energy conservation, material roughness, and microscopic level of surfaces details. More specifically, For global lighting (ambient term), I have used IBL(imaged based lighting) to simulate global illumination. 
+
+For microfacet material model shading, more specifically the specular BRDF using
+
+- D (Normal distribution function): Trowbridge-Reitz GGX
+- F (Fresnel function): Schlick-GGX
+- G (Geometric function): Schlick
+
+For IBL, I implemented the irradiance convolution map for diffuse part of the rendering equation. 
+
+![eq](./resources/eq.png)
+
+## TODO
+
+- Implement another set of DFG   Difficulty: 1
+- Implement specular part of IBL Difficulty: 4
 
 ## External Dependencies
 
@@ -52,3 +72,5 @@ EXE = ./build/App
 FLAGS = -g -Wall -I./include
 ```
 For windows, if you want to build this in powershell, you need to get gnu make and change file paths, and other things accordingly. Recommond you to install `wsl2` (most distro will be fine), so you can launch `bash` in your windows terminal. 
+
+If `./build/**.cpp file not found` occurs, you might want to make sure you have a `./build` directory set up.
