@@ -1,15 +1,15 @@
 # Using MinGW (windows only)
 # If you want to build on windows, install minGW and mesa dependencies
-GPP = /mnt/c/msys64/mingw64/bin/g++.exe
-LINK = -lglfw3 -lglew32 -lopengl32 -lgdi32 -limm32
-EXE = ./build/App.exe
-FLAGS = -g -Wall -I./include
+#GPP = /mnt/c/msys64/mingw64/bin/g++.exe
+#LINK = -lglfw3 -lglew32 -lopengl32 -lgdi32 -limm32
+#EXE = ./build/App.exe
+#FLAGS = -g -Wall -I./include
 
 #Linux
-#GPP = g++
-#LINK = -lglfw -lGLEW -lGL
-#EXE = ./build/App
-#FLAGS = -g -Wall -I./include
+GPP = g++
+LINK = -lglfw -lGLEW -lGL
+EXE = ./build/App
+FLAGS = -g -Wall -I./include
 
 #-----------------------------------------------------
 #--------Following should be changed carefully--------
