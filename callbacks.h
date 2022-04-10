@@ -5,6 +5,7 @@
 #include "GLFW/glfw3.h"
 #include <iostream>
 #include "camera.h"
+#include "gvars.h"     // Global variables
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {

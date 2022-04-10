@@ -28,7 +28,7 @@ public:
 private:
     float yaw;   // Vertical angle in rad
     float pitch; // Horizontal angle in rad
-    float sense = 0.02;
+    float sense = 0.005;
     float r;
     cy::Vec3f dir;
 

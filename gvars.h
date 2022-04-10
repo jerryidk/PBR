@@ -15,7 +15,11 @@ float metallic = 0.3f;
 float roughness = 0.3f;
 float ao = 0.05f;
 float albedo[3] = {0.5f, 0.0f, 0.0f};
-int gammacorrect = 0;
+int gammacorrect = 1;
+bool convolute = false;
+bool lightmap = false;
+int enviromentMap;
+int irradianceMap;
 
 float lightPositions[6] = {
     0.0f, 1.0f, 0.0f,

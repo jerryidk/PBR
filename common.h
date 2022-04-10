@@ -24,6 +24,9 @@
 #include "cyCodeBase/cyTriMesh.h"
 #include <iostream>
 #include "STB/stb_image.h"
+#include "camera.h"
+#include "gvars.h"     // Global variables
+#include "callbacks.h" // Call back functions
 
 /**
  * @brief Set the Up G L F W
@@ -33,6 +36,7 @@ void SetUpGLFW()
 {
     if (!glfwInit())
         std::cout << "glfw error" << std::endl;
+    const char *glsl_version = "#version 330";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -160,7 +164,7 @@ unsigned int CreateVAO(float *data, int datasize, int nAttribute, int *sAttribut
     return VAO;
 }
 
-unsigned int LoadTexture(char* name)
+unsigned int LoadTexture(char *name)
 {
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
@@ -185,6 +189,43 @@ unsigned int LoadTexture(char* name)
     }
 
     return Texture;
+}
+
+unsigned int CreateFramebuffer()
+{
+    unsigned int fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    return fbo;
+}
+
+unsigned int CreateRenderbuffer(GLuint type, int w, int h)
+{
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, type, w, h);
+    return rbo;
+}
+
+unsigned int CreateEnvMap(int w, int h)
+{
+    unsigned int envMap;
+    glGenTextures(1, &envMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envMap);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        // note that we store each face with 16 bit floating point values
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+                     w, h, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return envMap;
 }
 
 #endif
