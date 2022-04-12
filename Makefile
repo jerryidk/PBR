@@ -9,7 +9,7 @@
 GPP = g++
 LINK = -lglfw -lGLEW -lGL
 EXE = ./build/App
-FLAGS = -g -Wall -I./include
+FLAGS = -g -w -I./include
 
 #-----------------------------------------------------
 #--------Following should be changed carefully--------
