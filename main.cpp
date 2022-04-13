@@ -4,6 +4,34 @@ void ConvertMap(cy::GLSLProgram &shader, GLenum fromtype, unsigned int from,
                 unsigned int to, GLuint type, int w, int h, int VAO, int nv,
                 bool mipmap);
 
+void GenerateBRDFMap(cy::GLSLProgram &shader, GLenum type, int brdfMap, int w,
+                     int h) {
+  int fbo = CreateFramebuffer();
+  int rbo = CreateRenderbuffer(type, w, h);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, rbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         brdfMap, 0);
+  glViewport(0, 0, 512, 512);
+  shader.Bind();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  float quad[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+  int sizes[2] = {2,3};
+  int VAO = CreateVAO(quad, 20*sizeof(float), 2, sizes);
+  glBindVertexArray(VAO);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 int main(void) {
   //----------
   // Set up
@@ -38,12 +66,13 @@ int main(void) {
   // Load shaders
   //----------
   cy::GLSLProgram teapotShader, toCubemapShader, envShader, convolutionShader,
-      prefilterShader;
+      prefilterShader, brdfShader;
   teapotShader.BuildFiles("./shaders/teapot.vs", "./shaders/teapot.fs");
   toCubemapShader.BuildFiles("./shaders/cube.vs", "./shaders/cube.fs");
   envShader.BuildFiles("./shaders/cube.vs", "./shaders/env.fs");
   convolutionShader.BuildFiles("./shaders/cube.vs", "./shaders/convo.fs");
   prefilterShader.BuildFiles("./shaders/cube.vs", "./shaders/prefilter.fs");
+  brdfShader.BuildFiles("./shaders/brdf.vs", "./shaders/brdf.fs");
 
   //----------
   // Load texture
@@ -85,6 +114,14 @@ int main(void) {
   int prefilterMap = CreateEnvMap(w, h, true);
   ConvertMap(prefilterShader, GL_TEXTURE_CUBE_MAP, envMap, prefilterMap,
              GL_DEPTH_COMPONENT24, w, h, VAOCube, cube.NF() * 3, true);
+  
+  //-----------
+  // Generate BRDF map
+  //-----------
+  w = 512;
+  h = 512;
+  int brdfMap = CreateTexture( GL_TEXTURE_2D, w, h); 
+  GenerateBRDFMap(brdfShader, GL_TEXTURE_2D, brdfMap, w, h);
 
   //----------
   // Matrix transformation set up
@@ -188,6 +225,12 @@ int main(void) {
     teapotShader["irradianceMap"] = 0;
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+    teapotShader["prefilerMap"] = 1;
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    teapotShader["brdfMap"] = 2;
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, brdfMap);
     glDrawArrays(GL_TRIANGLES, 0, teapot.NF() * 3);
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -278,3 +321,4 @@ void ConvertMap(cy::GLSLProgram &shader, GLenum fromtype, unsigned int from,
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
