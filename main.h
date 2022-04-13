@@ -16,34 +16,30 @@
 #include "camera.h"    // camera class
 
 char *AppName = (char*) "PBR";
-int SCR_W = 800;
-int SCR_H = 600;
+int SCR_W = 800*2;
+int SCR_H = 600*2;
 float pre_xpos = 0;
 float pre_ypos = 0;
 Camera camera(cy::Vec3f(0.0f, 0.0f, 3.0f),
               cy::Vec3f(0.0f, 0.0f, 0.0f),
               cy::Vec3f(0.0f, 1.0f, 0.0f));
+cy::Vec3f lightPosition(12.5f, 1.5f, 10.0f); 
+cy::Vec3f lightColor(1000.0f, 1000.0f, 1000.0f); 
+
 GLFWwindow *window;
 
 bool onImgui = false;
-float metallic = 0.3f;
-float roughness = 0.3f;
-float ao = 0.05f;
+float metallic = 0.5f;
+float roughness = 0.5f;
+float ao = 0.5f;
 float albedo[3] = {0.5f, 0.0f, 0.0f};
 int gammacorrect = 1;
 bool convolute = false;
 int lightmap = 0;
-int enviromentMap;
-int irradianceMap;
+int enviromentMap = 0;
+int irradianceMap = 0;
 
-float lightPositions[6] = {
-    0.0f, 1.0f, 0.0f,
-    1.0f, 1.0f, 0.0f
-}; 
-float lightColors[6] = {
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f
-}; 
+
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -62,6 +58,7 @@ void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
 
     int left_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     int right_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+    int middle_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 
     if (left_state == GLFW_PRESS && !onImgui)
     {
@@ -87,7 +84,16 @@ void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos)
         pre_xpos = xpos;
         pre_ypos = ypos; 
     }
-        
+
+    if (middle_state == GLFW_PRESS && !onImgui)
+    {
+        if (xpos > pre_xpos)
+            lightPosition *= 1.01;
+        if (xpos < pre_xpos)
+            lightPosition *= 0.99;
+        pre_xpos = xpos;
+        pre_ypos = ypos; 
+    }
 }
 
 /**

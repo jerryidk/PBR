@@ -21,7 +21,7 @@
  *      brdf = kd * f_lambert + ks * f_cooktorrance
  *      
  *      ks = F
-        kd = 1 - ks
+ *      kd = 1 - ks
  *      f_lambert = c / pi where c is alberto/surface color
  *      f_cooktorrance = DG / (4 * w_i * n * w_o * n)
  *      D is Distribution function - This approximate how many h is aligned with surface normal on micro level  
@@ -41,8 +41,8 @@ uniform float ao;        // ambient occusion
 uniform bool gammacorrect;
 
 // lights
-uniform vec3 lightPositions[2];
-uniform vec3 lightColors[2];
+uniform vec3 lightPosition;
+uniform vec3 lightColor;
 
 uniform vec3 camPos;
 uniform samplerCube irradianceMap;
@@ -67,39 +67,37 @@ void main()
     F0 = mix(F0, albedo, metallic);
 	           
     // direct lighting
+    //------------------------
+    //------------------------
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < 0; ++i) 
-    {
-        // calculate per-light radiance
-        vec3 L = normalize(lightPositions[i] - WorldPos);
-        vec3 H = normalize(V + L);
-        float distance    = length(lightPositions[i] - WorldPos);
-        float attenuation = 1.0 / pow(distance,2);
-        vec3 radiance     = lightColors[i] * attenuation;        
-        
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughness);        
-        float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
-        
-        vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;	  
-        
-        vec3 numerator    = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3 specular     = numerator / denominator;  
-            
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);                
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
-    }   
-    
-    //indirect
-    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
+    vec3 L = normalize(lightPosition - WorldPos);
+    vec3 H = normalize(V + L);
+    float distance    = length(lightPosition - WorldPos);
+    float attenuation = 1.0 / pow(distance,2);
+    vec3 radiance     = lightColor * attenuation;        
+        
+    // cook-torrance brdf
+    float NDF = DistributionGGX(N, H, roughness);        
+    float G   = GeometrySmith(N, V, L, roughness);      
+    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
+        
     vec3 kS = F;
-    vec3 kD = 1.0 - kS;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;	  
+        
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular     = numerator / denominator;  
+    float NdotL = max(dot(N, L), 0.0);                
+    Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+     
+    //indirect lighting (IBL)
+    //------------------------
+    //------------------------
+    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    kS = F;
+    kD = 1.0 - kS;
     kD *= 1.0 - metallic;	  
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse    = irradiance * albedo;
@@ -107,10 +105,9 @@ void main()
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;   
     vec2 envBRDF  = texture(brdfMap, vec2(max(dot(N, V), 0.0), roughness)).rg;
-    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
-  
-    vec3 ambient = (kD * diffuse + specular) * ao; 
+    specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
+    vec3 ambient = (kD * diffuse + specular) * ao; 
 	vec3 color = ambient + Lo;
 
     //reinhard tone mapping
