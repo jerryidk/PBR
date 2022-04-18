@@ -44,11 +44,58 @@ You can't have photorealism without indirect lighting (Global illumation). Howev
 
 ![rendering equation](./resources/rendering.png)
 
-TODO
+In order to achieve the fast time rendering, we must split the equation into diffuse and specular part
+
+![splitsum](./resources/splitsum.png)
+
+For diffuse part, by fixing p at the world origin, we can compute indirect
+lighting by treating all pixels of the environment as lights. Since the
+equation doesn't depend on the `view` vector. This is called irradiance cube
+map. 
+
+For specular part, it gets a bit tricky because now the equation also depends on
+the view vector. That means that we have to recompute the map whenever we
+change our camera direction. There are two appoaches: first approach is simply use
+two-pass algorithm (this is expensive). The second approach is to approximate
+the specular equation with product of two equation which none of them depends
+on view vector directly. 
+
+![specularapproximation](./resources/specularappoximation.png)
+
+This is method is called **split-sum approximation** that came up by epic.
+
+In this implementation, I used the later approach. The first part of the
+split-sum equation is easy to do since it is similart to the diffuse part
+except that we now take `roughness` into consideration. We can do this by having
+mipmaps of textures that corresponding to `roughness` level. This is commonly
+refered as `prefilter map`.
+
+The second approximation is the most tricky and brilliant part of the split-sum. By
+playing around with the second part of the split-sum, we can get this 
+
+![secondpart](./resources/secondpart.png)
+
+If we look carefully, we can see that this equation can be only dependent upon
+`n dot v` and `roughness`. More importantly, both parameters are in the range
+`[0 - 1]`. We can store the result into a 2D texture map that can be looked up
+by this parameter. This map is commonly refered as `BRDF LUT` (Look up
+texture). However, if you were like me, you would question, how would we
+compute such map by taking `n dot v` ? The interesting intuition behind this is
+that we can get 2d version of `v` through `n dot v`,where `v.x = sqrt(1 - pow(n dot v,2))` and `v.y = n dot v` with `n = vec3(0.0, 1.0, 0.0)` so what we really are computing here is all 90 degree angle of view direction on a 2d plane.
 
 - **Monte Carlos Integeration**
 
-TODO
+In IBL, I have talked a lot about high level details of how we can approximate
+global illumination by pre-compute different maps. All those computatoin are
+solving the rendering equation, which is just a integral. We can't analytical
+solve them integrals always but we can approximate them with Monte carlos 
+integeration, which is a statistical approach in computing integrals. I am not
+going to write upon this topic because it is very math heavy and can't be done
+in just few sentences. However, here are a list of resources I recommond to
+read if you really want to understand the details of IBL. 
+
+[pixels](https://www.scratchapixel.com/)
+[learnOpenGl](https://learnopengl.com/PBR/IBL/Specular-IBL)
 
 - **Gamma correction**
 
