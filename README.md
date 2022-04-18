@@ -16,6 +16,14 @@ For microfacet material model shading, more specifically the specular BRDF using
 
 For IBL, I implemented the epic game solution to both diffuse (irradiance map) and specular(split sum - prefilter and brdf) map. 
 
+## Demo
+
+![demoImg-1](./resources/demo1.png)
+
+![demoImg-2](./resources/demo2.png)
+
+![demoImg-3](./resources/demo3.png)
+
 ## Thoughts
 
 Instead of talking about PBR thoery, I am going to talk about my own thoughts on learning PBR. (There are numerous tutorial online to exposing the details of the PBR, it is not worth for me to repeat the same information here again.) 
