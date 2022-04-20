@@ -16,6 +16,8 @@ For microfacet material model shading, more specifically the specular BRDF using
 
 For IBL, I implemented the epic game solution to both diffuse (irradiance map) and specular(split sum - prefilter and brdf) map. 
 
+Finally, a bit of shadow mapping just for final touch. 
+
 ## Demo
 
 ![demoImg-1](./resources/demo1.png)
