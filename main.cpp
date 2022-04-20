@@ -46,7 +46,7 @@ int main(void) {
   // Load shaders
   //----------
   cy::GLSLProgram teapotShader, toCubemapShader, envShader, convolutionShader,
-      prefilterShader, brdfShader, lightShader;
+      prefilterShader, brdfShader, lightShader, shadowShader;
   teapotShader.BuildFiles("./shaders/teapot.vs", "./shaders/teapot.fs");
   toCubemapShader.BuildFiles("./shaders/cube.vs", "./shaders/cube.fs");
   envShader.BuildFiles("./shaders/cube.vs", "./shaders/env.fs");
@@ -54,6 +54,7 @@ int main(void) {
   prefilterShader.BuildFiles("./shaders/cube.vs", "./shaders/prefilter.fs");
   brdfShader.BuildFiles("./shaders/brdf.vs", "./shaders/brdf.fs");
   lightShader.BuildFiles("./shaders/light.vs", "./shaders/light.fs");
+  shadowShader.BuildFiles("./shaders/shadow.vs", "./shaders/shadow.fs");
 
   //----------
   // Load texture
@@ -107,7 +108,7 @@ int main(void) {
   //----------
   // Matrix transformation set up
   //----------
-  cy::Matrix4f M, M2, V, P, S, R, T, S2;
+  cy::Matrix4f M, M2, V, LV, P, S, R, T, S2, BS, BT;
 
   // For Teapot
   P.SetPerspective(45.0f * M_PI / 180.0, (float)SCR_W / (float)SCR_H, 0.1f,
@@ -115,6 +116,11 @@ int main(void) {
   S.SetScale(0.05f, 0.05f, 0.05f);
   R.SetRotationX(-90.0f * M_PI / 180.0);
   M = S * R;
+
+  // Bias for shadow
+  BS.SetScale(0.5f, 0.5f, 0.5f);
+  cy::Vec3f m(0.5f, 0.5f, 0.5 - 0.001f);
+  BT.SetTranslation(m);
 
   // For light
   S2.SetScale(0.01f, 0.01f, 0.01f);
@@ -129,10 +135,21 @@ int main(void) {
   const char* maps[3] = {"cube map", "diffuse light map", "prefilter map"};
   glViewport(0, 0, SCR_W, SCR_H);
 
+  // Set up a depth framebuffer for shadow mapping
+  int shadowW, shadowH; 
+  shadowW = 512;
+  shadowH = 512; 
+  cy::GLRenderDepth2D shadowMap;
+  shadowMap.Initialize(true, 
+                      shadowW, shadowH);
+  shadowMap.SetTextureFilteringMode(GL_LINEAR, GL_LINEAR);
+  
+
   teapotShader.Bind();
   teapotShader["irradianceMap"] = 0;
   teapotShader["prefilterMap"] = 1;
   teapotShader["brdfMap"] = 2;
+  teapotShader["shadowMap"] = 3;
 
   envShader.Bind();
   envShader["envMap"] = 0;
@@ -177,10 +194,24 @@ int main(void) {
     //----------
     // Opengl Render
     //----------
+
+    //Shadow map
+    LV.SetView(lightPosition, camera.lookat, camera.up);
+    shadowMap.Bind();
+    glClear(GL_DEPTH_BUFFER_BIT);
+    shadowShader.Bind();
+    glBindVertexArray(VAO);
+    shadowShader["mlp"] = P * LV * M;
+    glDrawArrays(GL_TRIANGLES, 0, teapot.NF() * 3);
+    shadowMap.Unbind();
+
+
+    //Main scene
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    V.SetView(camera.pos, camera.lookat, camera.up);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    V.SetView(camera.pos, camera.lookat, camera.up);
     //------
     // Enviroment
     //-----
@@ -211,6 +242,7 @@ int main(void) {
     teapotShader.Bind();
     glBindVertexArray(VAO);
     teapotShader["mvp"] = P * V * M;
+    teapotShader["mlp"] = BT * BS * P * LV * M;
     teapotShader["model"] = M;
     teapotShader["metallic"] = metallic;
     teapotShader["roughness"] = roughness;
@@ -227,6 +259,8 @@ int main(void) {
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, brdfMap);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, shadowMap.GetTextureID());
 
     glDrawArrays(GL_TRIANGLES, 0, teapot.NF() * 3);
 

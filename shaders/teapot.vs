@@ -4,13 +4,16 @@ layout (location = 1) in vec3 aNormal;
 
 out vec3 Normal;
 out vec3 WorldPos;
+out vec4 PosInLight;
 
 uniform mat4 mvp;
+uniform mat4 mlp;
 uniform mat4 model;
 
 void main()
 {
     Normal = transpose(inverse(mat3(model))) * aNormal;
     WorldPos = vec3(model * vec4(aPos, 1.0)); 
+    PosInLight = mlp * vec4(aPos, 1.0);
     gl_Position = mvp * vec4(aPos, 1.0);
 }          

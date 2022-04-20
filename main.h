@@ -44,8 +44,20 @@ int irradianceMap = 0;
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     int esc_state = glfwGetKey(window, GLFW_KEY_ESCAPE);
+    int a_state = glfwGetKey(window, GLFW_KEY_A);
+    int d_state = glfwGetKey(window, GLFW_KEY_D);
+    int w_state = glfwGetKey(window, GLFW_KEY_W);
+    int s_state = glfwGetKey(window, GLFW_KEY_S);
     if (esc_state == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (w_state == GLFW_PRESS)
+        lightPosition += cy::Vec3f(0.0f, 0.1f, 0.0f);
+    if (s_state == GLFW_PRESS)
+        lightPosition -= cy::Vec3f(0.0f, 0.1f, 0.0f);
+    if (a_state == GLFW_PRESS)
+        lightPosition += cy::Vec3f(0.1f, 0.0f, 0.0f);
+    if (d_state == GLFW_PRESS)
+        lightPosition -= cy::Vec3f(0.1f, 0.0f, 0.0f);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
@@ -119,6 +131,7 @@ void SetUpGLFW()
     glfwSetCursorPosCallback(window, cursor_pos_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 }
 
 /**

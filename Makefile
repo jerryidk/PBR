@@ -1,3 +1,5 @@
+# IMPORTANT: Make sure you have glew and glfw installed on your system...
+
 # Using MinGW (windows only)
 # If you want to build on windows, install minGW and mesa dependencies
 #GPP = /mnt/c/msys64/mingw64/bin/g++.exe

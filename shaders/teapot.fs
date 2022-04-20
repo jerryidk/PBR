@@ -32,6 +32,7 @@ out vec4 FragColor;
 
 in vec3 Normal;
 in vec3 WorldPos;
+in vec4 PosInLight;
 
 // material parameters
 uniform vec3  albedo;    // diffuse/surface color
@@ -48,6 +49,7 @@ uniform vec3 camPos;
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfMap;
+uniform sampler2DShadow shadowMap;
 
 const float PI = 3.14159265359;
   
@@ -89,8 +91,8 @@ void main()
     vec3 numerator    = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular     = numerator / denominator;  
-    float NdotL = max(dot(N, L), 0.0);                
-    Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+    float NdotL = max(dot(N, L), 0.0);           
+    Lo = (kD * albedo / PI + specular) * radiance * NdotL; 
      
     //indirect lighting (IBL)
     //------------------------
@@ -108,7 +110,8 @@ void main()
     specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (kD * diffuse + specular) * ao; 
-	vec3 color = ambient + Lo;
+    float shadow = textureProj(shadowMap, PosInLight);     
+	vec3 color = ambient + shadow * Lo;
 
     //reinhard tone mapping
     color = color / (color + vec3(1.0));
